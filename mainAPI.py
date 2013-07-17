@@ -69,10 +69,10 @@ def main(argv=None):
         argv = sys.argv
 
     verbose = False
-    uid = ""
-    process_id = ""
-    audioFilename = ""
-    metadataFilename = ""
+    uid = None
+    process_id = None
+    audioFilename = None
+    metadataFilename = None
     accept = 'text/xml'
 
     # NEED TO SPECIFIY USERNAME AND PASSWORD HERE

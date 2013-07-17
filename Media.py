@@ -1,9 +1,9 @@
-import sys, urllib2, urllib
+import sys, urllib2, urllib, os
 from encode import multipart_encode, MultipartParam
 
 
 def read_file(filename):
-    fp = open(filename, "r")
+    fp = open(os.path.abspath(filename), "r")
     file_content = fp.read()
     fp.close()
 
