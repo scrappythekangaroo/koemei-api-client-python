@@ -41,6 +41,9 @@ Options
     -p, --process_id          Process ID for transcription process
     -u, --upload              Path or link to an audiofile to be uploaded
     -m, --metadata            Metadata for the audiofile
+    -t, --transcript          Transcript for the audio file
+    -s, --service             Service that the media belongs to
+    -e, --item_id             Item ID for the service
     -v, --verbose             Print out details about the process, handy for debugging
     -h, --help                Print this message ;-)
 
@@ -73,18 +76,22 @@ def main(argv=None):
     process_id = None
     audioFilename = None
     metadataFilename = None
+    transcriptFilename = None
     accept = 'text/xml'
+    service = None
+    item_id = None
 
     # NEED TO SPECIFIY USERNAME AND PASSWORD HERE
     username = '<CHANGEME>'
     password = '<CHANGEME>'
 
-    opts, args = getopt.getopt(argv[1:], "vhi:p:u:m:", ["verbose" ,"help", "uid=", "process_id=", "upload=", "metadata="])
+    opts, args = getopt.getopt(argv[1:], "vhi:p:u:m:s:e:t:", ["verbose" ,"help", "uid=", "process_id=", "upload=", "metadata=","service=","item_id=","transcript="])
 
     for o, a in opts:
         if o in ("-h","--help"):
             usage()
         elif o in ("-v","--verbose"):
+            # TODO: the goggles do nothing!
             verbose = True
         elif o in ("-i", "--uid"):
             uid = str(a)
@@ -94,24 +101,30 @@ def main(argv=None):
             audioFilename = str(a)
         elif o in ("-m", "--metadeta"):
             metadataFilename = str(a)
+        elif o in ("-s", "--service"):
+            service = str(a)
+        elif o in ("-e","--item_id"):
+            item_id = str(a)
+        elif o in ("-t","--transcript"):
+            transcriptFilename = str(a)
         else:
             print 'Wrong option '+o+'\n'
             usage()
 
-    if (len(args) < 2):
+    if len(args) < 2:
         print 'You need to provide an object type and action!'
         usage()
 
     object_type = args[0]
     action = args[1]
 
-    if (len(args) == 3):
+    if len(args) == 3:
         accept = args[2]
 
     register_openers()
 
     # Create an instance of the <object_type> given as input argument with the provided arguments
-    inst = globals()[object_type](accept, username, password, uid, process_id, audioFilename, metadataFilename)
+    inst = globals()[object_type](accept, username, password, uid, process_id, audioFilename, metadataFilename, transcriptFilename, service, item_id)
 
     # Call the <action> indicated in the input arguments
     func = getattr(inst, action)

@@ -5,7 +5,7 @@ from exceptions import NotImplementedError
 
 class BaseObject:
     def __init__(self, accept, username="", password="", uid="", process_id="", audioFilename=None,
-                 metadataFilename=None, transcriptFilename=None):
+                 metadataFilename=None, transcriptFilename=None, service=None, item_id = None):
         self.accept = accept
         self.username = username
         self.password = password
@@ -19,6 +19,8 @@ class BaseObject:
         self.datagen = {}
         self.headers = {}
         self.dest = 'https://www.koemei.com/REST/'
+        self.service = service
+        self.item_id = item_id
         self.response = {}
 
     @classmethod

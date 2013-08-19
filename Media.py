@@ -15,10 +15,10 @@ from BaseObject import BaseObject
 
 class Media(BaseObject):
     def __init__(self, accept, username="", password="", uid="", process_id="", audioFilename=None,
-                 metadataFilename=None, transcriptFilename=None):
+                 metadataFilename=None, transcriptFilename=None, service=None, item_id=None):
         BaseObject.__init__(self, accept, username=username, password=password, uid=uid, process_id=process_id,
                             audioFilename=audioFilename, metadataFilename=metadataFilename,
-                            transcriptFilename=transcriptFilename)
+                            transcriptFilename=transcriptFilename, service=service, item_id=item_id)
         self.path = 'media/'
         self.path_trans = '/transcribe'
         self.path_publish = '/publish'
@@ -39,38 +39,31 @@ class Media(BaseObject):
     @BaseObject._reset_headers
     def create(self):
         print >> sys.stderr, 'making post request to: %s%s' % (self.dest, self.path)
-        self.datagen = {}
+        data = {}
 
-        if self.audioFilename is not None:
-            if 'http' in self.audioFilename:
-                self.path = self.path + "?media=" + urllib.quote(self.audioFilename, safe='')
-                self.datagen = "" # should not be empty dict but empty string!
-                if self.transcriptFilename is not None:
-                    self.datagen, headers_ = multipart_encode({'transcript': read_file(self.transcriptFilename),})
-                    self.headers.update(headers_)
-            else:
-                if self.metadataFilename is not None:
-                    self.datagen, headers_ = multipart_encode({'metadata': read_file(self.metadataFilename),
-                                                               'media': open(self.audioFilename, "rb")})
-                #TODO : allow metadatafilename + transcript for alignment
-                elif self.transcriptFilename is not None:
-                    print >> sys.stderr, "hi"
-                    self.datagen, headers_ = multipart_encode({'transcript': read_file(self.transcriptFilename),
-                                                               'media': open(self.audioFilename, "rb")})
-                else:
-                    self.datagen, headers_ = multipart_encode({'media': open(self.audioFilename, "rb")})
-                self.headers.update(headers_)
+        if self.service:
+            data.update({'service': self.service,
+                         'item_id': self.item_id})
 
-        #print >> sys.stderr, "request headers: ", self.headers
+        if 'http' in self.audioFilename:
+            data.update({'media': self.audioFilename})
+        else:
+            data.update({'media': open(self.audioFilename, "rb")})
 
-        request = urllib2.Request(self.dest + self.path, data=self.datagen, headers=self.headers)
+        if self.transcriptFilename:
+            self.datagen.update({'transcript': read_file(self.transcriptFilename)})
+
+        headers = self.headers
+        data, headers_ = multipart_encode(data)
+        headers.update(headers_)
+
+        request = urllib2.Request(self.dest + self.path, data=data, headers=headers)
 
         BaseObject._execute(self, request)
 
     @BaseObject._reset_headers
     def transcribe(self, success_callback_url='', error_callback_url=''):
         print >> sys.stderr, 'making post request to: %s%s' % (self.dest, self.path + self.uid + self.path_trans)
-        self.datagen = {}
 
         data = urllib.urlencode(
             {'success_callback_url': success_callback_url, 'error_callback_url': error_callback_url, })
