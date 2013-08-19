@@ -15,10 +15,11 @@ from BaseObject import BaseObject
 
 class Media(BaseObject):
     def __init__(self, accept, username="", password="", uid="", process_id="", audioFilename=None,
-                 metadataFilename=None, transcriptFilename=None, service=None, item_id=None):
+                 metadataFilename=None, transcriptFilename=None,
+                 service=None, item_id=None, count=None, status=None):
         BaseObject.__init__(self, accept, username=username, password=password, uid=uid, process_id=process_id,
-                            audioFilename=audioFilename, metadataFilename=metadataFilename,
-                            transcriptFilename=transcriptFilename, service=service, item_id=item_id)
+                            audioFilename=audioFilename, metadataFilename=metadataFilename, transcriptFilename=transcriptFilename,
+                            service=service, item_id=item_id, count=count, status=status)
         self.path = 'media/'
         self.path_trans = '/transcribe'
         self.path_publish = '/publish'
@@ -33,14 +34,26 @@ class Media(BaseObject):
     @BaseObject._reset_headers
     def get_list(self):
         print >> sys.stderr, 'making get request to: %s%s' % (self.dest, self.path)
-        request = urllib2.Request(self.dest + self.path, headers=self.headers)
+
+        data = {}
+
+        if self.count:
+            data.update({'count': self.count})
+
+        if self.status:
+            data.update({'status_filter':  '-'.join(map(lambda x: str(x), self.status))})
+
+        data = urllib.urlencode(data)
+        url = "%s/%s?%s" % (self.dest, self.path, data)
+
+        request = urllib2.Request(url, headers=self.headers)
         BaseObject._execute(self, request)
 
     @BaseObject._reset_headers
     def create(self):
         print >> sys.stderr, 'making post request to: %s%s' % (self.dest, self.path)
-        data = {}
 
+        data = {}
         if self.service:
             data.update({'service': self.service,
                          'item_id': self.item_id})
@@ -74,15 +87,21 @@ class Media(BaseObject):
     @BaseObject._reset_headers
     def publish(self):
         print >> sys.stderr, 'making put request to: %s%s' % (self.dest, self.path + self.uid + self.path_publish)
-        self.datagen = {}
-        request = urllib2.Request(self.dest + self.path + self.uid + self.path_publish, data="", headers=self.headers)
+
+        data = {}
+        if self.service:
+            data.update({'service_name': self.service,})
+
+        data = urllib.urlencode(data)
+        url = "%s/%s/%s/%s?%s" % (self.dest, self.path, self.uid, self.path_publish, data)
+
+        request = urllib2.Request(url, data="", headers=self.headers)
         request.get_method = lambda: 'PUT'
         BaseObject._execute(self, request)
 
     @BaseObject._reset_headers
     def unpublish(self):
         print >> sys.stderr, 'making put request to: %s%s' % (self.dest, self.path + self.uid + self.path_unpublish)
-        self.datagen = {}
         request = urllib2.Request(self.dest + self.path + self.uid + self.path_unpublish, data="", headers=self.headers)
         request.get_method = lambda: 'PUT'
         BaseObject._execute(self, request)

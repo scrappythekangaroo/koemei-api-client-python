@@ -13,10 +13,13 @@ import getopt
 # for streaming
 from streaminghttp import register_openers
 
+STATUS_LIST = ['ASR', 'ALIGN', 'EDIT', 'UPLOAD', 'PUBLISH', 'TRANSCODE']
+STATUS_CODE = list(enumerate(STATUS_LIST, 1))
 
 # =======================================================
 # USAGE
 # =======================================================
+
 
 def usage():
         print """
@@ -44,6 +47,8 @@ Options
     -t, --transcript          Transcript for the audio file
     -s, --service             Service that the media belongs to
     -e, --item_id             Item ID for the service
+    -c, --count               Count setting for get_all request (otherwise pagination is limited to 12)
+    -f, --filter              Filter by status
     -v, --verbose             Print out details about the process, handy for debugging
     -h, --help                Print this message ;-)
 
@@ -80,12 +85,14 @@ def main(argv=None):
     accept = 'text/xml'
     service = None
     item_id = None
+    count = None
+    status = None
 
     # NEED TO SPECIFIY USERNAME AND PASSWORD HERE
     username = '<CHANGEME>'
     password = '<CHANGEME>'
 
-    opts, args = getopt.getopt(argv[1:], "vhi:p:u:m:s:e:t:", ["verbose" ,"help", "uid=", "process_id=", "upload=", "metadata=","service=","item_id=","transcript="])
+    opts, args = getopt.getopt(argv[1:], "vhi:p:u:m:s:e:t:f:", ["verbose" ,"help", "uid=", "process_id=", "upload=", "metadata=","service=","item_id=","transcript=","filter="])
 
     for o, a in opts:
         if o in ("-h","--help"):
@@ -101,12 +108,19 @@ def main(argv=None):
             audioFilename = str(a)
         elif o in ("-m", "--metadeta"):
             metadataFilename = str(a)
+        elif o in ("-t","--transcript"):
+            transcriptFilename = str(a)
         elif o in ("-s", "--service"):
             service = str(a)
         elif o in ("-e","--item_id"):
             item_id = str(a)
-        elif o in ("-t","--transcript"):
-            transcriptFilename = str(a)
+        elif o in ("-c","--count"):
+            count = int(a)
+        elif o in ("-f","--filter"):
+            if a in STATUS_LIST:
+                status = map(lambda x: x[0], filter(lambda x: x[1] == str(a), STATUS_CODE))
+            else:
+                raise Exception("Unrecognised STATUS from %s" % STATUS_LIST)
         else:
             print 'Wrong option '+o+'\n'
             usage()
@@ -124,7 +138,9 @@ def main(argv=None):
     register_openers()
 
     # Create an instance of the <object_type> given as input argument with the provided arguments
-    inst = globals()[object_type](accept, username, password, uid, process_id, audioFilename, metadataFilename, transcriptFilename, service, item_id)
+    inst = globals()[object_type](accept, username, password, uid, process_id,
+                                  audioFilename, metadataFilename, transcriptFilename,
+                                  service, item_id, count, status)
 
     # Call the <action> indicated in the input arguments
     func = getattr(inst, action)
@@ -138,5 +154,5 @@ def main(argv=None):
     print inst.response.read()
 
 if __name__=="__main__":
-  main()
+    main()
 
