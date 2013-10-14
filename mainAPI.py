@@ -14,7 +14,7 @@ import getopt
 from streaminghttp import register_openers
 
 STATUS_LIST = ['ASR', 'ALIGN', 'EDIT', 'UPLOAD', 'PUBLISH', 'TRANSCODE']
-STATUS_CODE = list(enumerate(STATUS_LIST, 1))
+STATUS_CODE = dict((v,k) for k, v in dict(enumerate(STATUS_LIST, start=1)).iteritems())
 
 # =======================================================
 # USAGE
@@ -117,8 +117,9 @@ def main(argv=None):
         elif o in ("-c","--count"):
             count = int(a)
         elif o in ("-f","--filter"):
-            if a in STATUS_LIST:
-                status = map(lambda x: x[0], filter(lambda x: x[1] == str(a), STATUS_CODE))
+            a = a.upper()
+            if a in STATUS_CODE:
+                status = STATUS_CODE[a]
             else:
                 raise Exception("Unrecognised STATUS from %s" % STATUS_LIST)
         else:
