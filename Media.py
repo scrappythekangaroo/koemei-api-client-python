@@ -1,7 +1,6 @@
 import sys, urllib2, urllib
 from encode import multipart_encode, MultipartParam
 
-
 def read_file(filename):
     fp = open(filename, "r")
     file_content = fp.read()
@@ -11,7 +10,7 @@ def read_file(filename):
 
 
 from BaseObject import BaseObject
-
+from FileProgress import  FileProgress
 
 class Media(BaseObject):
     def __init__(self, accept, username="", password="", uid="", process_id="", audioFilename=None,
@@ -42,6 +41,7 @@ class Media(BaseObject):
         self.datagen = {}
 
         if self.audioFilename is not None:
+            fp = None
             if 'http' in self.audioFilename:
                 self.path = self.path + "?media=" + urllib.quote(self.audioFilename, safe='')
                 self.datagen = "" # should not be empty dict but empty string!
@@ -49,23 +49,23 @@ class Media(BaseObject):
                     self.datagen, headers_ = multipart_encode({'transcript': read_file(self.transcriptFilename),})
                     self.headers.update(headers_)
             else:
+                fp = FileProgress(self.audioFilename,"rb")
                 if self.metadataFilename is not None:
                     self.datagen, headers_ = multipart_encode({'metadata': read_file(self.metadataFilename),
-                                                               'media': open(self.audioFilename, "rb")})
+                                                               'media': fp})
                 #TODO : allow metadatafilename + transcript for alignment
                 elif self.transcriptFilename is not None:
-                    print >> sys.stderr, "hi"
                     self.datagen, headers_ = multipart_encode({'transcript': read_file(self.transcriptFilename),
-                                                               'media': open(self.audioFilename, "rb")})
+                                                               'media': fp})
                 else:
-                    self.datagen, headers_ = multipart_encode({'media': open(self.audioFilename, "rb")})
+                    self.datagen, headers_ = multipart_encode({'media': fp})
                 self.headers.update(headers_)
 
-        #print >> sys.stderr, "request headers: ", self.headers
-
-        request = urllib2.Request(self.dest + self.path, data=self.datagen, headers=self.headers)
-
-        BaseObject._execute(self, request)
+            request = urllib2.Request(self.dest + self.path, data=self.datagen, headers=self.headers)
+            BaseObject._execute(self, request)
+  
+            if fp:
+                fp.close()
 
     @BaseObject._reset_headers
     def transcribe(self, success_callback_url='', error_callback_url=''):
