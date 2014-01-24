@@ -1,7 +1,6 @@
 import sys, urllib2, urllib, os
 from encode import multipart_encode, MultipartParam
 
-
 def read_file(filename):
     fp = open(os.path.abspath(filename), "r")
     file_content = fp.read()
@@ -11,7 +10,7 @@ def read_file(filename):
 
 
 from BaseObject import BaseObject
-
+from FileProgress import  FileProgress
 
 class Media(BaseObject):
     def __init__(self, accept, username="", password="", uid="", process_id="", audioFilename=None,
@@ -61,7 +60,7 @@ class Media(BaseObject):
         if 'http' in self.audioFilename:
             data.update({'media': self.audioFilename})
         else:
-            data.update({'media': open(self.audioFilename, "rb")})
+            data.update({'media':  FileProgress(open(self.audioFilename, "rb"))})
 
         if self.transcriptFilename:
             self.datagen.update({'transcript': read_file(self.transcriptFilename)})
